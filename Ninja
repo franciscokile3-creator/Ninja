@@ -1,11 +1,11 @@
--- Aimbot GUI Script with Open/Close Button and Draggable UI
+-- Aimbot GUI Script with Stamina Script Button
 -- DISCLAIMER: Use scripts responsibly and ensure compliance with the game's terms of service.
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
-local aimRadius = 100
-local aimMode = "HRP Aimbot"
 local aimbotEnabled = false
+local aimRadius = 100 -- Default detection range
+local predictionStrength = 0.2 -- Default prediction strength
 
 -- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
@@ -13,12 +13,16 @@ local Frame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
 local CloseButton = Instance.new("TextButton")
 local OpenButton = Instance.new("TextButton")
-local Dropdown = Instance.new("TextButton")
-local DropdownOptions = Instance.new("Frame")
-local HRPOption = Instance.new("TextButton")
-local CameraOption = Instance.new("TextButton")
 local EnableCheckbox = Instance.new("TextButton")
 local CheckboxLabel = Instance.new("TextLabel")
+local RangeLabel = Instance.new("TextLabel")
+local RangeTextBox = Instance.new("TextBox")
+local PredictionLabel = Instance.new("TextLabel")
+local PredictionTextBox = Instance.new("TextBox")
+local PredictionParagraph = Instance.new("TextLabel")
+local ErrorLabel = Instance.new("TextLabel")
+local StaminaButton = Instance.new("TextButton")
+local WarningLabel = Instance.new("TextLabel")
 
 -- Parent GUI to Player's Screen
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
@@ -26,8 +30,8 @@ ScreenGui.ResetOnSpawn = false
 
 -- Frame Configuration
 Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 200, 0, 150)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -75)
+Frame.Size = UDim2.new(0, 300, 0, 350)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -175)
 Frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 Frame.BorderSizePixel = 2
 Frame.Visible = true
@@ -36,7 +40,7 @@ Frame.Visible = true
 Title.Parent = Frame
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-Title.Text = "Aimbot GUI"
+Title.Text = "Enhanced Aimbot GUI"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextScaled = true
 
@@ -52,84 +56,92 @@ CloseButton.TextScaled = true
 -- Open Button Configuration
 OpenButton.Parent = ScreenGui
 OpenButton.Size = UDim2.new(0, 100, 0, 50)
-OpenButton.Position = UDim2.new(0.5, -50, 0.5, 100)
+OpenButton.Position = UDim2.new(0.5, -50, 0.5, 200)
 OpenButton.BackgroundColor3 = Color3.new(0.2, 0.8, 0.2)
 OpenButton.Text = "Open GUI"
 OpenButton.TextColor3 = Color3.new(1, 1, 1)
 OpenButton.TextScaled = true
 OpenButton.Visible = false
 
--- Dropdown Button Configuration
-Dropdown.Parent = Frame
-Dropdown.Size = UDim2.new(1, -20, 0, 30)
-Dropdown.Position = UDim2.new(0, 10, 0, 40)
-Dropdown.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
-Dropdown.Text = "Select Aimbot Mode"
-Dropdown.TextColor3 = Color3.new(1, 1, 1)
-Dropdown.TextScaled = true
-
--- Dropdown Options Configuration
-DropdownOptions.Parent = Frame
-DropdownOptions.Size = UDim2.new(1, -20, 0, 60)
-DropdownOptions.Position = UDim2.new(0, 10, 0, 70)
-DropdownOptions.BackgroundColor3 = Color3.new(0.25, 0.25, 0.25)
-DropdownOptions.Visible = false
-
-HRPOption.Parent = DropdownOptions
-HRPOption.Size = UDim2.new(1, 0, 0, 30)
-HRPOption.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-HRPOption.Text = "HRP Aimbot"
-HRPOption.TextColor3 = Color3.new(1, 1, 1)
-HRPOption.TextScaled = true
-
-CameraOption.Parent = DropdownOptions
-CameraOption.Size = UDim2.new(1, 0, 0, 30)
-CameraOption.Position = UDim2.new(0, 0, 0, 30)
-CameraOption.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-CameraOption.Text = "Camera Aimbot"
-CameraOption.TextColor3 = Color3.new(1, 1, 1)
-CameraOption.TextScaled = true
-
 -- Enable Checkbox Configuration
 EnableCheckbox.Parent = Frame
 EnableCheckbox.Size = UDim2.new(0, 20, 0, 20)
-EnableCheckbox.Position = UDim2.new(0, 10, 0, 110)
+EnableCheckbox.Position = UDim2.new(0, 10, 0, 50)
 EnableCheckbox.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
 EnableCheckbox.Text = ""
 EnableCheckbox.TextColor3 = Color3.new(1, 1, 1)
 
 CheckboxLabel.Parent = Frame
-CheckboxLabel.Size = UDim2.new(0, 150, 0, 20)
-CheckboxLabel.Position = UDim2.new(0, 40, 0, 110)
+CheckboxLabel.Size = UDim2.new(0, 200, 0, 20)
+CheckboxLabel.Position = UDim2.new(0, 40, 0, 50)
 CheckboxLabel.BackgroundTransparency = 1
 CheckboxLabel.Text = "Enable Aimbot"
 CheckboxLabel.TextColor3 = Color3.new(1, 1, 1)
 CheckboxLabel.TextScaled = true
 
--- Dropdown Toggle
-Dropdown.MouseButton1Click:Connect(function()
-    DropdownOptions.Visible = not DropdownOptions.Visible
-end)
+-- Range TextBox Configuration
+RangeLabel.Parent = Frame
+RangeLabel.Size = UDim2.new(0, 200, 0, 20)
+RangeLabel.Position = UDim2.new(0, 10, 0, 80)
+RangeLabel.BackgroundTransparency = 1
+RangeLabel.Text = "Detection Range:"
+RangeLabel.TextColor3 = Color3.new(1, 1, 1)
+RangeLabel.TextScaled = true
 
--- Change to HRP Aimbot
-HRPOption.MouseButton1Click:Connect(function()
-    aimMode = "HRP Aimbot"
-    Dropdown.Text = "HRP Aimbot"
-    DropdownOptions.Visible = false
-end)
+RangeTextBox.Parent = Frame
+RangeTextBox.Size = UDim2.new(0, 100, 0, 30)
+RangeTextBox.Position = UDim2.new(0, 10, 0, 110)
+RangeTextBox.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+RangeTextBox.Text = tostring(aimRadius)
+RangeTextBox.TextColor3 = Color3.new(1, 1, 1)
+RangeTextBox.TextScaled = true
+RangeTextBox.ClearTextOnFocus = false
 
--- Change to Camera Aimbot
-CameraOption.MouseButton1Click:Connect(function()
-    aimMode = "Camera Aimbot"
-    Dropdown.Text = "Camera Aimbot"
-    DropdownOptions.Visible = false
-end)
+-- Prediction TextBox Configuration
+PredictionLabel.Parent = Frame
+PredictionLabel.Size = UDim2.new(0, 200, 0, 20)
+PredictionLabel.Position = UDim2.new(0, 10, 0, 150)
+PredictionLabel.BackgroundTransparency = 1
+PredictionLabel.Text = "Prediction Strength:"
+PredictionLabel.TextColor3 = Color3.new(1, 1, 1)
+PredictionLabel.TextScaled = true
 
--- Toggle Aimbot Enable
-EnableCheckbox.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled
-    EnableCheckbox.BackgroundColor3 = aimbotEnabled and Color3.new(0, 1, 0) or Color3.new(0.3, 0.3, 0.3)
-end)
+PredictionTextBox.Parent = Frame
+PredictionTextBox.Size = UDim2.new(0, 100, 0, 30)
+PredictionTextBox.Position = UDim2.new(0, 10, 0, 180)
+PredictionTextBox.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+PredictionTextBox.Text = tostring(predictionStrength)
+PredictionTextBox.TextColor3 = Color3.new(1, 1, 1)
+PredictionTextBox.TextScaled = true
+PredictionTextBox.ClearTextOnFocus = false
+
+-- Stamina Button Configuration
+StaminaButton.Parent = Frame
+StaminaButton.Size = UDim2.new(0, 200, 0, 40)
+StaminaButton.Position = UDim2.new(0, 50, 0, 220)
+StaminaButton.BackgroundColor3 = Color3.new(0.3, 0.6, 0.9)
+StaminaButton.Text = "Run Stamina Script"
+StaminaButton.TextColor3 = Color3.new(1, 1, 1)
+StaminaButton.TextScaled = true
+
+-- Warning Label Configuration
+WarningLabel.Parent = Frame
+WarningLabel.Size = UDim2.new(0, 250, 0, 40)
+WarningLabel.Position = UDim2.new(0, 10, 0, 270)
+WarningLabel.BackgroundTransparency = 1
+WarningLabel.Text = "WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!"
+WarningLabel.TextColor3 = Color3.new(1, 0, 0)
+WarningLabel.TextScaled = true
+WarningLabel.TextWrapped = true
+
+-- Error Label Configuration
+ErrorLabel.Parent = Frame
+ErrorLabel.Size = UDim2.new(0, 250, 0, 20)
+ErrorLabel.Position = UDim2.new(0, 10, 0, 320)
+ErrorLabel.BackgroundTransparency = 1
+ErrorLabel.Text = ""
+ErrorLabel.TextColor3 = Color3.new(1, 0, 0)
+ErrorLabel.TextScaled = true
 
 -- Close Button Logic
 CloseButton.MouseButton1Click:Connect(function()
@@ -143,34 +155,38 @@ OpenButton.MouseButton1Click:Connect(function()
     OpenButton.Visible = false
 end)
 
--- Make GUI Draggable
-local dragging = false
-local dragInput, dragStart, startPos
+-- Stamina Button Logic
+StaminaButton.MouseButton1Click:Connect(function()
+    local Sprinting = game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting
+    local stamina = require(Sprinting)
+    stamina.MaxStamina = 100  -- Maximum stamina
+    stamina.MinStamina = -20  -- Minimum stamina
+    stamina.StaminaGain = 100 -- Stamina gain
+    stamina.StaminaLoss = 0 -- Stamina loss
+    stamina.SprintSpeed = 40 -- Sprint speed
+    stamina.StaminaLossDisabled = true -- Disable stamina drain (true/false)
+end)
 
-Title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+-- Range TextBox Logic
+RangeTextBox.FocusLost:Connect(function(enterPressed)
+    local input = RangeTextBox.Text
+    if tonumber(input) then
+        aimRadius = tonumber(input)
+        ErrorLabel.Text = ""
+    else
+        ErrorLabel.Text = "Error: Not a valid number!"
+        RangeTextBox.Text = tostring(aimRadius) -- Reset to previous valid value
     end
 end)
 
-Title.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+-- Prediction TextBox Logic
+PredictionTextBox.FocusLost:Connect(function(enterPressed)
+    local input = PredictionTextBox.Text
+    if tonumber(input) then
+        predictionStrength = tonumber(input)
+        ErrorLabel.Text = ""
+    else
+        ErrorLabel.Text = "Error: Not a valid number!"
+        PredictionTextBox.Text = tostring(predictionStrength) -- Reset to previous valid value
     end
 end)
